@@ -22,240 +22,238 @@ import com.example.attendance.dao.AttendanceDAO;
 import com.example.attendance.dto.Attendance;
 import com.example.attendance.dto.User;
 
-
 @WebServlet("/attendance")
 public class AttendanceServlet extends HttpServlet {
-	
 
-    private final AttendanceDAO attendanceDAO = new AttendanceDAO();
-    
-    
+	private final AttendanceDAO attendanceDAO = new AttendanceDAO();
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String action = req.getParameter("action");
-        HttpSession session = req.getSession(false);
-        User user = (User) session.getAttribute("user");
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String action = req.getParameter("action");
+		HttpSession session = req.getSession(false);
+		User user = (User) session.getAttribute("user");
 
-        if (user == null) {
-            resp.sendRedirect("login.jsp");
-            return;
-        }
+		if (user == null) {
+			resp.sendRedirect("login.jsp");
+			return;
+		}
 
-        // セッションからメッセージ取得
-        String message = (String) session.getAttribute("successMessage");
-        if (message != null) {
-            req.setAttribute("successMessage", message);
-            session.removeAttribute("successMessage");
-        }
+		// セッションからメッセージ取得
+		String message = (String) session.getAttribute("successMessage");
+		if (message != null) {
+			req.setAttribute("successMessage", message);
+			session.removeAttribute("successMessage");
+		}
 
-        if ("export_csv".equals(action) && "admin".equals(user.getRole())) {
-            exportCsv(req, resp);
-            return;
-        }
+		if ("export_csv".equals(action) && "admin".equals(user.getRole())) {
+			exportCsv(req, resp);
+			return;
+		}
 
-        if ("filter".equals(action) && "admin".equals(user.getRole())) {
-            handleFilter(req, resp);
-        } else {
-            if ("admin".equals(user.getRole())) {
-                setAdminAttributes(req);
-                RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin_menu.jsp");
-                rd.forward(req, resp);
-            } else {
-                req.setAttribute("attendanceRecords", attendanceDAO.findByUserId(user.getUsername()));
-                RequestDispatcher rd = req.getRequestDispatcher("/jsp/employee_menu.jsp");
-                rd.forward(req, resp);
-            }
-        }
-    }
+		if ("filter".equals(action) && "admin".equals(user.getRole())) {
+			handleFilter(req, resp);
+		} else {
+			if ("admin".equals(user.getRole())) {
+				setAdminAttributes(req);
+				RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin_menu.jsp");
+				rd.forward(req, resp);
+			} else {
+				req.setAttribute("attendanceRecords", attendanceDAO.findByUserId(user.getUsername()));
+				RequestDispatcher rd = req.getRequestDispatcher("/jsp/employee_menu.jsp");
+				req.getRequestDispatcher("/WEB-INF/jsp/mypage.jsp").forward(req, resp);
+				rd.forward(req, resp);
+			}
+		}
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        User user = (User) session.getAttribute("user");
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		HttpSession session = req.getSession(false);
+		User user = (User) session.getAttribute("user");
 
-        if (user == null) {
-            resp.sendRedirect("login.jsp");
-            return;
-        }
+		if (user == null) {
+			resp.sendRedirect("login.jsp");
+			return;
+		}
 
-        String action = req.getParameter("action");
+		String action = req.getParameter("action");
 
-        switch (action) {
-            case "check_in":
-                attendanceDAO.checkIn(user.getUsername());
-                session.setAttribute("successMessage", "出勤を記録しました。");
-                break;
+		switch (action) {
+		case "check_in":
+			attendanceDAO.checkIn(user.getUsername());
+			session.setAttribute("successMessage", "出勤を記録しました。");
+			break;
 
-            case "check_out":
-                attendanceDAO.checkOut(user.getUsername());
-                session.setAttribute("successMessage", "退勤を記録しました。");
-                break;
+		case "check_out":
+			attendanceDAO.checkOut(user.getUsername());
+			session.setAttribute("successMessage", "退勤を記録しました。");
+			break;
 
-            case "add_manual":
-                if ("admin".equals(user.getRole())) {
-                    addManualAttendance(req, session);
-                }
-                break;
+		case "add_manual":
+			if ("admin".equals(user.getRole())) {
+				addManualAttendance(req, session);
+			}
+			break;
 
-            case "update_manual":
-                if ("admin".equals(user.getRole())) {
-                    updateManualAttendance(req, session);
-                }
-                break;
+		case "update_manual":
+			if ("admin".equals(user.getRole())) {
+				updateManualAttendance(req, session);
+			}
+			break;
 
-            case "delete_manual":
-                if ("admin".equals(user.getRole())) {
-                    deleteManualAttendance(req, session);
-                }
-                break;
-        }
+		case "delete_manual":
+			if ("admin".equals(user.getRole())) {
+				deleteManualAttendance(req, session);
+			}
+			break;
+		}
 
-        // リダイレクト
-        if ("admin".equals(user.getRole())) {
-            resp.sendRedirect("attendance?action=filter&filterUserId=" +
-                    (req.getParameter("filterUserId") != null ? req.getParameter("filterUserId") : "") +
-                    "&startDate=" + (req.getParameter("startDate") != null ? req.getParameter("startDate") : "") +
-                    "&endDate=" + (req.getParameter("endDate") != null ? req.getParameter("endDate") : ""));
-        } else {
-            resp.sendRedirect("attendance");
-        }
-    }
+		// リダイレクト
+		if ("admin".equals(user.getRole())) {
+			resp.sendRedirect("attendance?action=filter&filterUserId=" +
+					(req.getParameter("filterUserId") != null ? req.getParameter("filterUserId") : "") +
+					"&startDate=" + (req.getParameter("startDate") != null ? req.getParameter("startDate") : "") +
+					"&endDate=" + (req.getParameter("endDate") != null ? req.getParameter("endDate") : ""));
+		} else {
+			resp.sendRedirect("attendance");
+		}
+	}
 
-    private void handleFilter(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String filterUserId = req.getParameter("filterUserId");
-        LocalDate startDate = parseDate(req.getParameter("startDate"));
-        LocalDate endDate = parseDate(req.getParameter("endDate"));
+	private void handleFilter(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String filterUserId = req.getParameter("filterUserId");
+		LocalDate startDate = parseDate(req.getParameter("startDate"));
+		LocalDate endDate = parseDate(req.getParameter("endDate"));
 
-        List<Attendance> filteredRecords = attendanceDAO.findFilteredRecords(filterUserId, startDate, endDate);
-        req.setAttribute("allAttendanceRecords", filteredRecords);
+		List<Attendance> filteredRecords = attendanceDAO.findFilteredRecords(filterUserId, startDate, endDate);
+		req.setAttribute("allAttendanceRecords", filteredRecords);
 
-        Map<String, Long> totalHoursByUser = filteredRecords.stream()
-                .collect(Collectors.groupingBy(Attendance::getUserId,
-                        Collectors.summingLong(att -> {
-                            if (att.getCheckInTime() != null && att.getCheckOutTime() != null) {
-                                return java.time.temporal.ChronoUnit.HOURS.between(att.getCheckInTime(), att.getCheckOutTime());
-                            }
-                            return 0L;
-                        })));
+		Map<String, Long> totalHoursByUser = filteredRecords.stream()
+				.collect(Collectors.groupingBy(Attendance::getUserId,
+						Collectors.summingLong(att -> {
+							if (att.getCheckInTime() != null && att.getCheckOutTime() != null) {
+								return java.time.temporal.ChronoUnit.HOURS.between(att.getCheckInTime(),
+										att.getCheckOutTime());
+							}
+							return 0L;
+						})));
 
-        req.setAttribute("totalHoursByUser", totalHoursByUser);
-        req.setAttribute("monthlyWorkingHours", attendanceDAO.getMonthlyWorkingHours(filterUserId));
-        req.setAttribute("monthlyCheckInCounts", attendanceDAO.getMonthlyCheckInCounts(filterUserId));
+		req.setAttribute("totalHoursByUser", totalHoursByUser);
+		req.setAttribute("monthlyWorkingHours", attendanceDAO.getMonthlyWorkingHours(filterUserId));
+		req.setAttribute("monthlyCheckInCounts", attendanceDAO.getMonthlyCheckInCounts(filterUserId));
 
-        RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin_menu.jsp");
-        rd.forward(req, resp);
-    }
+		RequestDispatcher rd = req.getRequestDispatcher("/jsp/admin_menu.jsp");
+		rd.forward(req, resp);
+	}
 
-    private void setAdminAttributes(HttpServletRequest req) {
-        List<Attendance> allRecords = attendanceDAO.findAll();
-        req.setAttribute("allAttendanceRecords", allRecords);
+	private void setAdminAttributes(HttpServletRequest req) {
+		List<Attendance> allRecords = attendanceDAO.findAll();
+		req.setAttribute("allAttendanceRecords", allRecords);
 
-        Map<String, Long> totalHoursByUser = allRecords.stream()
-                .collect(Collectors.groupingBy(Attendance::getUserId,
-                        Collectors.summingLong(att -> {
-                            if (att.getCheckInTime() != null && att.getCheckOutTime() != null) {
-                                return java.time.temporal.ChronoUnit.HOURS.between(att.getCheckInTime(), att.getCheckOutTime());
-                            }
-                            return 0L;
-                        })));
+		Map<String, Long> totalHoursByUser = allRecords.stream()
+				.collect(Collectors.groupingBy(Attendance::getUserId,
+						Collectors.summingLong(att -> {
+							if (att.getCheckInTime() != null && att.getCheckOutTime() != null) {
+								return java.time.temporal.ChronoUnit.HOURS.between(att.getCheckInTime(),
+										att.getCheckOutTime());
+							}
+							return 0L;
+						})));
 
-        req.setAttribute("totalHoursByUser", totalHoursByUser);
-        req.setAttribute("monthlyWorkingHours", attendanceDAO.getMonthlyWorkingHours(null));
-        req.setAttribute("monthlyCheckInCounts", attendanceDAO.getMonthlyCheckInCounts(null));
-    }
+		req.setAttribute("totalHoursByUser", totalHoursByUser);
+		req.setAttribute("monthlyWorkingHours", attendanceDAO.getMonthlyWorkingHours(null));
+		req.setAttribute("monthlyCheckInCounts", attendanceDAO.getMonthlyCheckInCounts(null));
+	}
 
-    private void addManualAttendance(HttpServletRequest req, HttpSession session) {
-        try {
-            String userId = req.getParameter("userId");
-            LocalDateTime checkIn = LocalDateTime.parse(req.getParameter("checkInTime"));
-            String checkOutStr = req.getParameter("checkOutTime");
-            LocalDateTime checkOut = (checkOutStr != null && !checkOutStr.isEmpty())
-                    ? LocalDateTime.parse(checkOutStr)
-                    : null;
+	private void addManualAttendance(HttpServletRequest req, HttpSession session) {
+		try {
+			String userId = req.getParameter("userId");
+			LocalDateTime checkIn = LocalDateTime.parse(req.getParameter("checkInTime"));
+			String checkOutStr = req.getParameter("checkOutTime");
+			LocalDateTime checkOut = (checkOutStr != null && !checkOutStr.isEmpty())
+					? LocalDateTime.parse(checkOutStr)
+					: null;
 
-            attendanceDAO.addManualAttendance(userId, checkIn, checkOut);
-            session.setAttribute("successMessage", "勤怠記録を手動で追加しました。");
-        } catch (DateTimeParseException e) {
-            session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
-        }
-    }
+			attendanceDAO.addManualAttendance(userId, checkIn, checkOut);
+			session.setAttribute("successMessage", "勤怠記録を手動で追加しました。");
+		} catch (DateTimeParseException e) {
+			session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
+		}
+	}
 
-    private void updateManualAttendance(HttpServletRequest req, HttpSession session) {
-        try {
-            String userId = req.getParameter("userId");
-            LocalDateTime oldCheckIn = LocalDateTime.parse(req.getParameter("oldCheckInTime"));
-            String oldCheckOutStr = req.getParameter("oldCheckOutTime");
-            LocalDateTime oldCheckOut = (oldCheckOutStr != null && !oldCheckOutStr.isEmpty())
-                    ? LocalDateTime.parse(oldCheckOutStr)
-                    : null;
-            LocalDateTime newCheckIn = LocalDateTime.parse(req.getParameter("newCheckInTime"));
-            String newCheckOutStr = req.getParameter("newCheckOutTime");
-            LocalDateTime newCheckOut = (newCheckOutStr != null && !newCheckOutStr.isEmpty())
-                    ? LocalDateTime.parse(newCheckOutStr)
-                    : null;
+	private void updateManualAttendance(HttpServletRequest req, HttpSession session) {
+		try {
+			String userId = req.getParameter("userId");
+			LocalDateTime oldCheckIn = LocalDateTime.parse(req.getParameter("oldCheckInTime"));
+			String oldCheckOutStr = req.getParameter("oldCheckOutTime");
+			LocalDateTime oldCheckOut = (oldCheckOutStr != null && !oldCheckOutStr.isEmpty())
+					? LocalDateTime.parse(oldCheckOutStr)
+					: null;
+			LocalDateTime newCheckIn = LocalDateTime.parse(req.getParameter("newCheckInTime"));
+			String newCheckOutStr = req.getParameter("newCheckOutTime");
+			LocalDateTime newCheckOut = (newCheckOutStr != null && !newCheckOutStr.isEmpty())
+					? LocalDateTime.parse(newCheckOutStr)
+					: null;
 
-            if (attendanceDAO.updateManualAttendance(userId, oldCheckIn, oldCheckOut, newCheckIn, newCheckOut)) {
-                session.setAttribute("successMessage", "勤怠記録を手動で更新しました。");
-            } else {
-                session.setAttribute("errorMessage", "勤怠記録の更新に失敗しました。");
-            }
-        } catch (DateTimeParseException e) {
-            session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
-        }
-    }
+			if (attendanceDAO.updateManualAttendance(userId, oldCheckIn, oldCheckOut, newCheckIn, newCheckOut)) {
+				session.setAttribute("successMessage", "勤怠記録を手動で更新しました。");
+			} else {
+				session.setAttribute("errorMessage", "勤怠記録の更新に失敗しました。");
+			}
+		} catch (DateTimeParseException e) {
+			session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
+		}
+	}
 
-    private void deleteManualAttendance(HttpServletRequest req, HttpSession session) {
-        try {
-            String userId = req.getParameter("userId");
-            LocalDateTime checkIn = LocalDateTime.parse(req.getParameter("checkInTime"));
-            String checkOutStr = req.getParameter("checkOutTime");
-            LocalDateTime checkOut = (checkOutStr != null && !checkOutStr.isEmpty())
-                    ? LocalDateTime.parse(checkOutStr)
-                    : null;
+	private void deleteManualAttendance(HttpServletRequest req, HttpSession session) {
+		try {
+			String userId = req.getParameter("userId");
+			LocalDateTime checkIn = LocalDateTime.parse(req.getParameter("checkInTime"));
+			String checkOutStr = req.getParameter("checkOutTime");
+			LocalDateTime checkOut = (checkOutStr != null && !checkOutStr.isEmpty())
+					? LocalDateTime.parse(checkOutStr)
+					: null;
 
-            if (attendanceDAO.deleteManualAttendance(userId, checkIn, checkOut)) {
-                session.setAttribute("successMessage", "勤怠記録を削除しました。");
-            } else {
-                session.setAttribute("errorMessage", "勤怠記録の削除に失敗しました。");
-            }
-        } catch (DateTimeParseException e) {
-            session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
-        }
-    }
+			if (attendanceDAO.deleteManualAttendance(userId, checkIn, checkOut)) {
+				session.setAttribute("successMessage", "勤怠記録を削除しました。");
+			} else {
+				session.setAttribute("errorMessage", "勤怠記録の削除に失敗しました。");
+			}
+		} catch (DateTimeParseException e) {
+			session.setAttribute("errorMessage", "日付/時刻の形式が不正です。");
+		}
+	}
 
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) return null;
-        try {
-            return LocalDate.parse(dateStr);
-        } catch (DateTimeParseException e) {
-            return null;
-        }
-    }
+	private LocalDate parseDate(String dateStr) {
+		if (dateStr == null || dateStr.isEmpty())
+			return null;
+		try {
+			return LocalDate.parse(dateStr);
+		} catch (DateTimeParseException e) {
+			return null;
+		}
+	}
 
-    private void exportCsv(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.setContentType("text/csv; charset=UTF-8");
-        resp.setHeader("Content-Disposition", "attachment; filename=\"attendance_records.csv\"");
-        PrintWriter writer = resp.getWriter();
-        writer.append("User ID,Check-in Time,Check-out Time\n");
+	private void exportCsv(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		resp.setContentType("text/csv; charset=UTF-8");
+		resp.setHeader("Content-Disposition", "attachment; filename=\"attendance_records.csv\"");
+		PrintWriter writer = resp.getWriter();
+		writer.append("User ID,Check-in Time,Check-out Time\n");
 
-        String filterUserId = req.getParameter("filterUserId");
-        LocalDate startDate = parseDate(req.getParameter("startDate"));
-        LocalDate endDate = parseDate(req.getParameter("endDate"));
+		String filterUserId = req.getParameter("filterUserId");
+		LocalDate startDate = parseDate(req.getParameter("startDate"));
+		LocalDate endDate = parseDate(req.getParameter("endDate"));
 
-        List<Attendance> records = attendanceDAO.findFilteredRecords(filterUserId, startDate, endDate);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		List<Attendance> records = attendanceDAO.findFilteredRecords(filterUserId, startDate, endDate);
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        for (Attendance record : records) {
-            writer.append(String.format("%s,%s,%s\n",
-                    record.getUserId(),
-                    record.getCheckInTime() != null ? record.getCheckInTime().format(formatter) : "",
-                    record.getCheckOutTime() != null ? record.getCheckOutTime().format(formatter) : ""));
-        }
+		for (Attendance record : records) {
+			writer.append(String.format("%s,%s,%s\n",
+					record.getUserId(),
+					record.getCheckInTime() != null ? record.getCheckInTime().format(formatter) : "",
+					record.getCheckOutTime() != null ? record.getCheckOutTime().format(formatter) : ""));
+		}
 
-        writer.flush();
-        writer.close();
-    }
+		writer.flush();
+		writer.close();
+	}
 }
-
-
