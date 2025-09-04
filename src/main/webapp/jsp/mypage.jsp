@@ -6,7 +6,9 @@ isErrorPage="true" %>
 ${user.username}
 
 <!--<a class="aaaaa" href="<c:url value='/attendance'/>">従業員メニュー</a>-->
-<a class="aaaaa" var="employeemenuUrl" href="/employee_menu.java">従業員メニュー</a>
+<!-- <a class="aaaaa" var="employeemenuUrl" href="/Ugoke.java">従業員メニュー</a> -->
+<a href="<c:url value='/employee_menu.jsp' />">従業員メニュー</a>
+
 
 
 

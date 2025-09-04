@@ -256,24 +256,7 @@ public class AttendanceServlet extends HttpServlet {
 		writer.flush();
 		writer.close();
 		
-		@WebServlet("/AttendanceServlet")
-		public class AttendanceServlet extends HttpServlet {
-		    private AttendanceDAO dao = new AttendanceDAO();
-
-		    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		        String action = req.getParameter("action");
-		        String userId = "test_user"; // ★本当はログイン中のユーザーIDをセッションから取る
-
-		        if ("clockIn".equals(action)) {
-		            dao.clockIn(userId);
-		        } else if ("clockOut".equals(action)) {
-		            dao.clockOut(userId);
-		        }
-
-		        resp.sendRedirect("attendance.jsp"); // 履歴一覧に戻る
-		    }
-		}
-
+		
 		
 	}
 	
