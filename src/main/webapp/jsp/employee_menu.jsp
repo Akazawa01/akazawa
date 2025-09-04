@@ -75,10 +75,50 @@ button.aaaaa {
   <h2>チャット</h2>
 <div id="chat-box" style="border:1px solid #ccc; height:200px; overflow-y:auto; padding:10px; background:#f0f0f0;"></div>
 
-<form id="chat-form" style="margin-top:10px;">
-  <input type="text" id="chat-input" placeholder="メッセージを入力..." style="width:70%;">
+<form id="chat-form" action="chat" method="post" style="margin-top:10px;">
+  <input type="text" name="msg" id="chat-input" placeholder="メッセージを入力..." style="width:70%;">
+  <input type="hidden" name="user" value="${user.username}">
   <button type="submit" class="aaaaa">送信</button>
 </form>
+<script>
+const chatBox = document.getElementById("chat-box");
+const chatForm = document.getElementById("chat-form");
+const chatInput = document.getElementById("chat-input");
+
+// メッセージ一覧を取得して表示
+function loadMessages() {
+  fetch("chat")
+    .then(res => res.text())
+    .then(data => {
+      chatBox.innerText = data; // サーバーからの内容をそのまま表示
+      chatBox.scrollTop = chatBox.scrollHeight; // 自動で一番下までスクロール
+    });
+}
+
+// メッセージ送信処理
+chatForm.addEventListener("submit", function(e) {
+  e.preventDefault(); // ページリロード防止
+  const msg = chatInput.value;
+  if (!msg.trim()) return;
+
+  fetch("chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "user=${user.username}&msg=" + encodeURIComponent(msg)
+  })
+  .then(() => {
+    chatInput.value = "";
+    loadMessages(); // 再読み込み
+  });
+});
+
+// ページ読み込み時にチャット内容表示
+window.onload = function() {
+  loadMessages();
+  setInterval(loadMessages, 3000); // 3秒ごとに更新（オートリロード）
+};
+</script>
+
 
   <h2>勤怠カレンダー</h2>
   <div id="calendar"></div>
