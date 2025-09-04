@@ -49,9 +49,7 @@ button.aaaaa {
 </style>
 </head>
 <body>
-<header>
-<a class="aaaaa" href="<c:url value='/jsp/mypage.jsp'/>">マイページ</a>
-</header>
+
 <div class="container">
   <h1>従業員メニュー</h1>
   <p>ようこそ, ${user.username}さん</p>
