@@ -3,6 +3,8 @@ isErrorPage="true" %>
 
 <h1>マイページ</h1>
 
+${user.username}
+
 <a class="aaaaa" href="<c:url value='/attendance'/>">従業員メニュー</a>
 
 

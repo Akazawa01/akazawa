@@ -7,6 +7,11 @@
 <meta charset="UTF-8">
 <title>従業員メニュー</title>
 <link rel="stylesheet" href="style.css">
+
+
+
+
+
 <style>
 /* カレンダー用の簡単なスタイル */
 #calendar {
@@ -66,6 +71,14 @@ button.aaaaa {
       <input type="submit" value="退勤">
     </form>
   </div>
+  
+  <h2>チャット</h2>
+<div id="chat-box" style="border:1px solid #ccc; height:200px; overflow-y:auto; padding:10px; background:#f0f0f0;"></div>
+
+<form id="chat-form" style="margin-top:10px;">
+  <input type="text" id="chat-input" placeholder="メッセージを入力..." style="width:70%;">
+  <button type="submit" class="aaaaa">送信</button>
+</form>
 
   <h2>勤怠カレンダー</h2>
   <div id="calendar"></div>
